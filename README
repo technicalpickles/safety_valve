@@ -1,0 +1,76 @@
+SafetyValve
+===========
+
+Because that pressure has to go somewhere.
+
+http://www.youtube.com/watch?v=7jF5r_AK9q4&feature=related
+
+Errors are bound to happen. When your users encounter one, by default, they will see a generic page provided by Rails. Wouldn't it be nice if you could give them an error page that fits the look and feel of your app?
+
+That's where comes in: it provides you with some sane defaults for rescuing from some common Rails exceptions. It also returns a HTTP status code that is appropriate
+
+For now, it only handles exceptions would be 404 (File Not Found) errors. This includes:
+
+ * ActiveRecord::RecordNotFound
+ * ActionController::RoutingError
+ * ActionController::UnknownAction
+ * ActionController::UnknownController
+
+Example
+=======
+
+Update your app/controller/application.rb to look something like:
+
+    class ApplicationController < ActionController::Base
+      include SafetyValve::Controller
+      # ... rest of your code here
+    end
+    
+Generate the error templates:
+
+    script/generate errors
+    
+This creates a template at app/views/errors/404.html.erb. It can be whatever you want, but here's what it looks like by default:
+
+    <div class="error">
+      The resource you requested was not found.
+    </div>
+    
+
+We can now do functional tests that make sure we get 404 errors when accessing resources that don't exist. Here's an example in shoulda:
+
+    class EventsControllerTest < Test::Rails::ControllerTestCase
+      context "trying to view an event that doesn't exist" do
+        setup do
+          get :show, :id => 'gibberish aieeeee'
+        end
+
+        should_respond_with :not_found # 404 works as well
+      end
+    end
+    
+The effect
+==========
+
+If you're controller does a Model.find(params[:id]), and the record doesn't exist, you'll see ActiveRecord::RecordNotFound. SafetyValve will handle rescuing this, and will see that app/views/errors/404.html.erb (or 404.html.haml) is rendered.
+
+Gotchas
+=======
+
+A few of the exceptions will always bubble up to the top in development mode, so you won't see the effect:
+
+ * ActionController::RoutingError
+
+References
+==========
+
+This plugin was inspired by some of these fine posts:
+
+ * http://coderkitty.sweetperceptions.com/2008/7/6/meaningful-404s-and-500s
+ * http://henrik.nyh.se/2008/07/rails-404
+ * http://ryandaigle.com/articles/2007/9/24/what-s-new-in-edge-rails-better-exception-handling
+
+Copyright
+=========
+
+Copyright (c) 2008 Josh Nichols, released under the MIT license
